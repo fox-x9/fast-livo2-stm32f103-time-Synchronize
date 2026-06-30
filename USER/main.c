@@ -40,7 +40,7 @@ int main(void)
 	delay_init();	    	//延时函数初始化	  
     SysTick_Init();         //开启 SysTick 1ms 中断
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); 	//设置NVIC中断分组2:2位抢占优先级，2位响应优先级
-	uart_init(115200);       //串口初始化为115200 (PPS时间同步要求高速率)
+	uart_init(9600);         // 串口初始化为9600 (Livox GPS同步标准波特率)
  	LED_Init();			    //LED端口初始化
 	TIM2_PWM_Init(TIM2_PWM_ARR, TIM2_PWM_PSC); // 10 Hz 相机触发 PA1       
  	TIM3_PWM_Init(TIM3_PWM_ARR, TIM3_PWM_PSC); // 1Hz PPS + 从模式同步 PB5
