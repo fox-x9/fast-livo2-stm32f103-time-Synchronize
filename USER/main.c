@@ -38,6 +38,8 @@
 /* PWM 频率参数
  * TIM2: 72MHz/(7199+1)=10KHz, ARR=999 → 10Hz  (PA1)
  * TIM3: 72MHz/(7199+1)=10KHz, ARR=9999 → 1Hz  (PB5)
+ * PPS 脉宽: TIM3 CCR2=500 → 50ms @10KHz
+ * GPRMC 延迟: gprmc.c 中 GPRMC_TX_DELAY_MS (当前 10ms)
  */
 #define TIM2_PWM_ARR   999
 #define TIM2_PWM_PSC   7199
