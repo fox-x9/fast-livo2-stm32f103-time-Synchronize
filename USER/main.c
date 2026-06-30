@@ -1,3 +1,29 @@
+/*******************************************************************************
+ * STM32 GPS TimeSync + Camera Trigger System
+ * 平台: STM32F103 (Cortex-M3) / Keil MDK-ARM V5
+ *
+ * 模块架构:
+ *   TIM3 (1Hz PPS, PB5) ──硬件同步──→ TIM2 (10Hz 相机触发, PA1)
+ *   USART1 (9600bps)     ──→  $GPRMC 模拟GPS报文
+ *   PC13 LED             ──→  500ms 非阻塞闪烁 (工作指示灯)
+ *   SysTick              ──→  1ms 系统 tick (uwTick)
+ *
+ * 硬件接口定义:
+ *   PA1  (TIM2_CH2)  →  10Hz PWM 相机触发输出 (50% 占空比)
+ *   PB5  (TIM3_CH2)  →  1Hz PPS 秒脉冲输出 (10ms 窄脉冲)
+ *   PA9  (USART1_TX) →  GPS 模拟报文 TX (9600bps, 8N1)
+ *   PA10 (USART1_RX) →  GPS 串口 RX (备用)
+ *   PC13             →  板载 LED  输出 (低电平有效)
+ *
+ * 数据流向:
+ *   TIM3 1Hz ISR → var_Exp++ / GPRMC_Update() / 溢出→TIM2硬件复位
+ *   主循环 WFI   → GPRMC_Output() 串口发送 / PC13 LED 闪烁检测
+ *
+ * 硬件同步:
+ *   TIM3 选主模式, 溢出触发 TIM2 从模式复位, 0延迟消除毛刺
+ *
+ * 禁用: KEY (key.c 保留但 main.c 已注释)
+ *******************************************************************************/
 #include "led.h"
 #include "delay.h"
 //#include "key.h"	// KEY功能已屏蔽（文件保留以备后续启用）
