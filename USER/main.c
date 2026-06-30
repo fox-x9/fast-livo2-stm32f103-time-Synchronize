@@ -36,6 +36,7 @@ static void SysTick_Init(void)
 
 int main(void)
 {
+    u32 last_led_tick = 0;  // PC13 工作指示灯闪烁计时
 
 	delay_init();	    	//延时函数初始化	  
     SysTick_Init();         //开启 SysTick 1ms 中断
@@ -44,9 +45,6 @@ int main(void)
  	LED_Init();			    //LED端口初始化
 	TIM2_PWM_Init(TIM2_PWM_ARR, TIM2_PWM_PSC); // 10 Hz 相机触发 PA1       
  	TIM3_PWM_Init(TIM3_PWM_ARR, TIM3_PWM_PSC); // 1Hz PPS + 从模式同步 PB5
-
-    // PC13 工作指示灯（非阻塞闪烁）
-    u32 last_led_tick = 0;
     LED_PC13 = 1;   // 初始熄灭（LED 低电平有效）
 
 	while(1)

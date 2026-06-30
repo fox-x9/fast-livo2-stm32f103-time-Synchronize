@@ -47,7 +47,7 @@ int fputc(int ch, FILE *f)
 }
 #endif 
 
-/*使用microLib的方??/
+//加入以下代码,支持printf函数,而不需要选择use MicroLib
  /* 
 int fputc(int ch, FILE *f)
 {

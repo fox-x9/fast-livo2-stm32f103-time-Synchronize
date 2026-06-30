@@ -1,4 +1,4 @@
-﻿#include "stm32f10x.h"
+#include "stm32f10x.h"
 #include "key.h"
 #include "sys.h" 
 #include "delay.h"
@@ -44,3 +44,4 @@ else if(WK_UP==1)return WKUP_PRES;
 }else if(KEY0==0&&WK_UP==0)key_up=1;     
  return 0;// 无按键按下
 }
+

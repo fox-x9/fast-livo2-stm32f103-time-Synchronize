@@ -1,4 +1,4 @@
-﻿#include "timer.h"
+#include "timer.h"
 #include "led.h"
 #include "usart.h"
 #include "gprmc.h"
@@ -125,3 +125,4 @@ void TIM3_PWM_Init(u16 arr,u16 psc)
 	TIM_SelectInputTrigger(TIM2, TIM_TS_ITR2);          //触发源: TIM3
 	TIM_Cmd(TIM2, ENABLE);                              //重启, 自动对齐相位
 }
+
