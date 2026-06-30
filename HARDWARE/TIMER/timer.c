@@ -18,11 +18,9 @@ void TIM3_IRQHandler(void)   //TIM3中断
     if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) //更新事件中断
     {
         TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
-        LED1 = !LED1;
 
         // var_Exp 累加，供回传时间差测量
         TIM2->CNT = TIM2->ARR / 2;
-        PCout(13) = 0;
 
         // GPRMC 时间更新与数据输出
         GPRMC_Update();

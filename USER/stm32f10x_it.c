@@ -24,6 +24,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h" 
 
+/* 系统 1ms tick 计数器（供主循环非阻塞延时使用） */
+volatile u32 uwTick = 0;
 
  
 void NMI_Handler(void)
@@ -77,6 +79,7 @@ void PendSV_Handler(void)
  
 void SysTick_Handler(void)
 {
+    uwTick++;
 }
 
 /******************************************************************************/
