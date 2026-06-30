@@ -11,7 +11,7 @@ void GPRMC_Update(void);
 // 外部可访问的 GPRMC 字符串变量
 extern char gprmcStr[7];
 extern int chckNum;
-extern char chckNumChar[2];
+extern char chckNumChar[3];
 extern int ss;
 extern int mm;
 extern int hh;

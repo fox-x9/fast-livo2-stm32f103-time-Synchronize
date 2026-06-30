@@ -5,20 +5,11 @@
 
 char gprmcStr[7]="$GPRMC,";
 int chckNum=0;
-char chckNumChar[2];
+char chckNumChar[3];   // 2字符 + '\0' 终止符
 
 int ss=0;
 int mm=0;
 int hh=0;
-
-unsigned char result;
-int i;
-
-char value_1[100]="";
-char value_2[100]="";
-char value_time[10]="";
-
-char test[100]="$GPRMC,004015,A,2812.0498,N,11313.1361,E,0.0,180.0,150122,3.9,W,A*";
 
 /*******************************************************************************
  * 函数名: checkNum
@@ -28,6 +19,9 @@ char test[100]="$GPRMC,004015,A,2812.0498,N,11313.1361,E,0.0,180.0,150122,3.9,W,
  *******************************************************************************/
 int checkNum(const char *gprmcContext)
 {
+    int i;
+    unsigned char result;
+
     if (gprmcContext == NULL) 
     {
         return -1;
@@ -55,6 +49,9 @@ int checkNum(const char *gprmcContext)
  *******************************************************************************/
 void GPRMC_Update(void)
 {
+    static char value_1[100];
+    static char value_2[100];
+
     // UTC 时间递增
     if(ss < 59){
         ss++;

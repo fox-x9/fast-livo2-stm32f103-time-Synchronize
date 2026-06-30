@@ -6,64 +6,27 @@
 #include <stdio.h>
 #include <string.h>
 
-//1,����TIM3_PWM_Init������
-//2,����LED0_PWM_VAL�궨�壬����TIM3_CH2����									  
-//////////////////////////////////////////////////////////////////////////////////  
-   	  
-//ͨ�ö�ʱ��3�жϳ�ʼ��
-//����ʱ��ѡ��ΪAPB1��2������APB1Ϊ36M
-//arr���Զ���װֵ��
-//psc��ʱ��Ԥ��Ƶ��
-//����ʹ�õ��Ƕ�ʱ��3!
-void TIM3_Int_Init(u16 arr,u16 psc)
-{
-  TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-	NVIC_InitTypeDef NVIC_InitStructure;
-
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE); //ʱ��ʹ��
-
-	TIM_TimeBaseStructure.TIM_Period = arr; //��������һ�������¼�װ�����Զ���װ�ؼĴ������ڵ�ֵ	 ������5000Ϊ500ms
-	TIM_TimeBaseStructure.TIM_Prescaler =psc; //����������ΪTIMxʱ��Ƶ�ʳ�����Ԥ��Ƶֵ  10Khz�ļ���Ƶ��  
-	TIM_TimeBaseStructure.TIM_ClockDivision = 0; //����ʱ�ӷָ�:TDTS = Tck_tim
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM���ϼ���ģʽ
-	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure); //����TIM_TimeBaseInitStruct��ָ���Ĳ�����ʼ��TIMx��ʱ�������λ
- 
-	TIM_ITConfig(TIM3,TIM_IT_Update,ENABLE ); //ʹ��ָ����TIM3�ж�,���������ж�
-
-	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;  //TIM3�ж�
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;  //��ռ���ȼ�0��
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;  //�����ȼ�3��
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //IRQͨ����ʹ��
-	NVIC_Init(&NVIC_InitStructure);  //����NVIC_InitStruct��ָ���Ĳ�����ʼ������NVIC�Ĵ���
-
-	TIM_Cmd(TIM3, ENABLE);  //ʹ��TIMx����
-							 
-}
+// 定时器3中断初始化（当前未使用，PWM初始化中已包含中断配置）
 
 
 
 
-vu16 varl=0;
-//��ʱ��3�жϷ������
+// 定时器3中断标志变量
 vu16 var_Exp=0;
-void TIM3_IRQHandler(void)   //TIM3�ж�
+void TIM3_IRQHandler(void)   //TIM3中断
 {
+    if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) //更新事件中断
+    {
+        TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+        LED1 = !LED1;
 
+        // var_Exp 累加，供回传时间差测量
+        TIM2->CNT = TIM2->ARR / 2;
+        PCout(13) = 0;
 
-		if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) //���ָ����TIM�жϷ������:TIM �ж�Դ 
-		{
-		TIM_ClearITPendingBit(TIM3, TIM_IT_Update  );  //���TIMx���жϴ�����λ:TIM �ж�Դ 
-		LED1=!LED1;
-			
-			//var_Exp �����ع�ʱ�������Ʋ���
-		TIM2->CNT=TIM2->ARR/2;
-
-		PCout(13)=0;
-		}
-		
-		
-		// GPRMC 时间更新与数据输出
-		GPRMC_Update();
+        // GPRMC 时间更新与数据输出
+        GPRMC_Update();
+    }
 }
 
 
