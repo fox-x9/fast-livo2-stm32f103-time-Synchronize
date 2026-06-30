@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 
+/* GPRMC 发送延迟: PPS 上升沿后延迟 10ms 再开始串口发送
+   规格要求: 0~900ms (推荐 0~430ms), 确保报文不先于 PPS 发出 */
+#define GPRMC_TX_DELAY_MS  10
+
 #define GPRMC_PREFIX    "$GPRMC,"
 #define GPRMC_LATITUDE  "2237.496474,N"
 #define GPRMC_LONGITUDE "11356.089515,E"
@@ -20,6 +24,12 @@ int hh=0;
 /* GPRMC 输出缓冲区与标志 */
 static char  gprmc_buf[100];
 volatile u8 gprmc_output_flag = 0;
+
+/* PPS 触发时间戳 (uwTick 值), 用于延迟发送 */
+static u32 gprmc_pps_tick = 0;
+
+/* 1ms SysTick 全局计数器 (定义于 stm32f10x_it.c) */
+extern volatile u32 uwTick;
 
 /*******************************************************************************
  * 函数名: checkNum
@@ -81,7 +91,10 @@ void GPRMC_Update(void)
     sprintf(gprmc_buf, "%s%02d%02d%02d%s", gprmcStr, hh, mm, ss, GPRMC_SUFFIX);
     chckNum = checkNum(gprmc_buf);
     sprintf(chckNumChar, "%02X", chckNum);
-    gprmc_output_flag = 1;   // 通知主循环输出
+    // 记录 PPS 触发时刻, 主循环延迟 10ms 后发送
+    // 避免 GPRMC 报文先于 PPS 脉冲发出
+    gprmc_pps_tick = uwTick;
+    gprmc_output_flag = 1;   // 通知主循环有待发送数据
 }
 
 /*******************************************************************************
@@ -93,6 +106,10 @@ void GPRMC_Output(void)
 {
     if (gprmc_output_flag)
     {
+        // 延迟检查: PPS 上升沿后至少等待 GPRMC_TX_DELAY_MS
+        if (uwTick - gprmc_pps_tick < GPRMC_TX_DELAY_MS)
+            return;
+
         printf("%s", gprmc_buf);
         printf("%s\r\n", chckNumChar);
         gprmc_output_flag = 0;

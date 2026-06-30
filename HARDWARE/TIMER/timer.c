@@ -103,7 +103,7 @@ void TIM3_PWM_Init(u16 arr,u16 psc)
 
 	TIM_Cmd(TIM3, ENABLE);  //使能TIM3
 
-	TIM_SetCompare2(TIM3, 100);    // PPS窄脉冲 ~10ms @10KHz
+	TIM_SetCompare2(TIM3, 500);    // PPS窄脉冲 50ms @10KHz
 
 	TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE); //使能TIM3更新中断
 
