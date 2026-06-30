@@ -4,6 +4,7 @@
 #include "sys.h"
 #include "usart.h"
 #include "timer.h"
+#include "gprmc.h"
 //灰色 SWIO  7 左4
 //白色 SWCLK 9 左5
 //黑色 GND 右 2
@@ -39,11 +40,10 @@ int main(void)
 	delay_init();	    	//延时函数初始化	  
     SysTick_Init();         //开启 SysTick 1ms 中断
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); 	//设置NVIC中断分组2:2位抢占优先级，2位响应优先级
-	//uart_init(115200);	//串口初始化为115200
-	uart_init(9600);
+	uart_init(115200);       //串口初始化为115200 (PPS时间同步要求高速率)
  	LED_Init();			    //LED端口初始化
-	TIM2_PWM_Init(TIM2_PWM_ARR, TIM2_PWM_PSC); // 10 Hz    pin_A1       
- 	TIM3_PWM_Init(TIM3_PWM_ARR, TIM3_PWM_PSC); // 1 Hz  pin_B5
+	TIM2_PWM_Init(TIM2_PWM_ARR, TIM2_PWM_PSC); // 10 Hz 相机触发 PA1       
+ 	TIM3_PWM_Init(TIM3_PWM_ARR, TIM3_PWM_PSC); // 1Hz PPS + 从模式同步 PB5
 
     // PC13 工作指示灯（非阻塞闪烁）
     u32 last_led_tick = 0;
@@ -53,8 +53,11 @@ int main(void)
 	{
 		__WFI();  // 进入休眠，中断唤醒
 
-        // 非阻塞：每隔 LED_BLINK_INTERVAL ms 翻转一次 PC13
-        if (uwTick - last_led_tick >= LED_BLINK_INTERVAL)
+		// GPRMC 串口输出（非阻塞，由TIM3中断标志触发）
+		GPRMC_Output();
+
+		// 非阻塞：每隔 LED_BLINK_INTERVAL ms 翻转一次 PC13
+		if (uwTick - last_led_tick >= LED_BLINK_INTERVAL)
         {
             last_led_tick = uwTick;
             LED_PC13 = !LED_PC13;

@@ -15,9 +15,8 @@ void TIM3_IRQHandler(void)   //TIM3中断
 		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
 
 		var_Exp++;                      // 累加，供回传时间差测量
-		TIM2->CNT = TIM2->ARR / 2;
 
-		// GPRMC 时间更新与数据输出
+	// GPRMC 时间更新 (不在ISR中printf, 只准备数据)
 		GPRMC_Update();
 	}
 }
@@ -61,6 +60,8 @@ void TIM2_PWM_Init(u16 arr,u16 psc)
 	TIM_Cmd(TIM2, ENABLE);  //使能TIM2
 
 	TIM_SetCompare2(TIM2, TIM2->ARR / 2);
+
+	// TIM2从模式将在TIM3_PWM_Init中配置（TIM3→TIM2硬件同步）
 }
 
 //TIM3 PWM部分初始化
@@ -92,8 +93,8 @@ void TIM3_PWM_Init(u16 arr,u16 psc)
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
 	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure); //初始化TIM3的时间基数单位
 
-	//初始化TIM3 Channel2 PWM模式
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2; //PWM模式2
+	//初始化TIM3 Channel2 PWM模式 (PPS窄脉冲: 10ms高电平)
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; //PWM模式1 (CNT<CCR=高)
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //比较输出使能
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //输出极性高
 	TIM_OC2Init(TIM3, &TIM_OCInitStructure);  //初始化TIM3 OC2
@@ -102,7 +103,7 @@ void TIM3_PWM_Init(u16 arr,u16 psc)
 
 	TIM_Cmd(TIM3, ENABLE);  //使能TIM3
 
-	TIM_SetCompare2(TIM3, TIM3->ARR / 2);
+	TIM_SetCompare2(TIM3, 100);    // PPS窄脉冲 ~10ms @10KHz
 
 	TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE); //使能TIM3更新中断
 
@@ -111,4 +112,16 @@ void TIM3_PWM_Init(u16 arr,u16 psc)
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;  //响应优先级3级
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //IRQ通道使能
 	NVIC_Init(&NVIC_InitStructure);  //初始化NVIC寄存器
+
+	/* 硬件同步: TIM3(主)→TIM2(从)
+	 * TIM3溢出时自动复位TIM2计数器, 保证相机触发与PPS相位严格对齐
+	 * 消除软件写CNT产生的毛刺脉冲
+	 */
+	TIM_SelectMasterSlaveMode(TIM3, TIM_MasterSlaveMode_Enable);
+	TIM_SelectOutputTrigger(TIM3, TIM_TRGOSource_Update);
+
+	TIM_Cmd(TIM2, DISABLE);                             //暂停TIM2
+	TIM_SelectSlaveMode(TIM2, TIM_SlaveMode_Reset);     //从模式: 触发复位
+	TIM_SelectInputTrigger(TIM2, TIM_TS_ITR2);          //触发源: TIM3
+	TIM_Cmd(TIM2, ENABLE);                              //重启, 自动对齐相位
 }

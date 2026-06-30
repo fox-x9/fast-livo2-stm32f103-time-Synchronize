@@ -17,6 +17,10 @@ int ss=0;
 int mm=0;
 int hh=0;
 
+/* GPRMC 输出缓冲区与标志 */
+static char  gprmc_buf[100];
+volatile u8 gprmc_output_flag = 0;
+
 /*******************************************************************************
  * 函数名: checkNum
  * 功能  : 计算 GPRMC 字符串的异或校验和
@@ -50,13 +54,12 @@ int checkNum(const char *gprmcContext)
 
 /*******************************************************************************
  * 函数名: GPRMC_Update
- * 功能  : UTC 时间递增（hh:mm:ss），拼接 GPRMC 字符串并输出
- * 说明  : 由定时器中断周期性调用
+ * 功能  : UTC 时间递增, 拼接 GPRMC 字符串, 设置输出标志
+ * 说明  : 由 TIM3 ISR 调用 (1Hz), 不在中断中 printf
+ * 注意  : 主循环中调用 GPRMC_Output() 完成串口发送
  *******************************************************************************/
 void GPRMC_Update(void)
 {
-    static char value[100];
-
     // UTC 时间递增
     if(ss < 59){
         ss++;
@@ -75,9 +78,23 @@ void GPRMC_Update(void)
     }
     
     // 拼接 GPRMC 字符串 (hhmmss + 固定字段 + 校验和)
-    sprintf(value, "%s%02d%02d%02d%s", gprmcStr, hh, mm, ss, GPRMC_SUFFIX);
-    chckNum = checkNum(value);
+    sprintf(gprmc_buf, "%s%02d%02d%02d%s", gprmcStr, hh, mm, ss, GPRMC_SUFFIX);
+    chckNum = checkNum(gprmc_buf);
     sprintf(chckNumChar, "%02X", chckNum);
-    printf("%s", value);
-    printf("%s\n", chckNumChar);
+    gprmc_output_flag = 1;   // 通知主循环输出
+}
+
+/*******************************************************************************
+ * 函数名: GPRMC_Output
+ * 功能  : 非阻塞输出 GPRMC 数据到串口
+ * 说明  : 由主循环周期性调用, 检测到标志位时发送
+ *******************************************************************************/
+void GPRMC_Output(void)
+{
+    if (gprmc_output_flag)
+    {
+        printf("%s", gprmc_buf);
+        printf("%s\r\n", chckNumChar);
+        gprmc_output_flag = 0;
+    }
 }
