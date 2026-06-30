@@ -6,9 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// 定时器3中断初始化（当前未使用，PWM初始化中已包含中断配置）
-
-// 定时器3中断标志变量
+// 定时器3中断次数计数器
 vu16 var_Exp=0;
 void TIM3_IRQHandler(void)   //TIM3中断
 {
@@ -16,7 +14,7 @@ void TIM3_IRQHandler(void)   //TIM3中断
 	{
 		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
 
-		// var_Exp 累加，供回传时间差测量
+		var_Exp++;                      // 累加，供回传时间差测量
 		TIM2->CNT = TIM2->ARR / 2;
 
 		// GPRMC 时间更新与数据输出

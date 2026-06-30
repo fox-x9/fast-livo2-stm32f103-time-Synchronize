@@ -3,7 +3,13 @@
 #include <stdio.h>
 #include <string.h>
 
-char gprmcStr[7]="$GPRMC,";
+#define GPRMC_PREFIX    "$GPRMC,"
+#define GPRMC_LATITUDE  "2237.496474,N"
+#define GPRMC_LONGITUDE "11356.089515,E"
+#define GPRMC_DATE      "230520"
+#define GPRMC_SUFFIX    ".00,A," GPRMC_LATITUDE "," GPRMC_LONGITUDE ",0.0,225.5," GPRMC_DATE ",2.3,W,A*"
+
+char gprmcStr[] = GPRMC_PREFIX;  // 自动计算长度含 \0
 int chckNum=0;
 char chckNumChar[3];   // 2字符 + '\0' 终止符
 
@@ -49,8 +55,7 @@ int checkNum(const char *gprmcContext)
  *******************************************************************************/
 void GPRMC_Update(void)
 {
-    static char value_1[100];
-    static char value_2[100];
+    static char value[100];
 
     // UTC 时间递增
     if(ss < 59){
@@ -69,11 +74,10 @@ void GPRMC_Update(void)
         }
     }
     
-    // 拼接 GPRMC 字符串
-    sprintf(value_2, "%s%02d%02d%02d%s", gprmcStr, hh, mm, ss, ".00,A,2237.496474,N,11356.089515,E,0.0,225.5,230520,2.3,W,A*");
-    strcpy(value_1, value_2);
-    chckNum = checkNum(value_1);
+    // 拼接 GPRMC 字符串 (hhmmss + 固定字段 + 校验和)
+    sprintf(value, "%s%02d%02d%02d%s", gprmcStr, hh, mm, ss, GPRMC_SUFFIX);
+    chckNum = checkNum(value);
     sprintf(chckNumChar, "%02X", chckNum);
-    printf("%s", value_2);
+    printf("%s", value);
     printf("%s\n", chckNumChar);
 }

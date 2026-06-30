@@ -9,7 +9,7 @@ int checkNum(const char *gprmcContext);
 void GPRMC_Update(void);
 
 // 外部可访问的 GPRMC 字符串变量
-extern char gprmcStr[7];
+extern char gprmcStr[];
 extern int chckNum;
 extern char chckNumChar[3];
 extern int ss;
